@@ -4,7 +4,7 @@
 CONDA_BASE="/home/${USER}/anaconda3"
 ENV_NAME="sapiens"
 PYTHON_VERSION="3.10"
-PYTORCH_VERSION="pytorch-cuda=12.1"
+PYTORCH_VERSION="pytorch-cuda=11.8"
 
 # Update with the path to your local conda directory
 source "${CONDA_BASE}/etc/profile.d/conda.sh"

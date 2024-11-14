@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ####-------------------MODEL_CARD----------------------------
-DATASET='coco_wholebody'
-MODEL="sapiens_1b-210e_${DATASET}-1024x768"
+DATASET='acupoint'
+MODEL="sapiens_0.6b-xxxe_${DATASET}-1024x768"
 JOB_NAME="pose_whole_$MODEL"
 TRAIN_BATCH_SIZE_PER_GPU=4
 

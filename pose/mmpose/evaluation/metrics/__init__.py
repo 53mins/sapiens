@@ -14,10 +14,12 @@ from .posetrack18_metric import PoseTrack18Metric
 from .goliath_metric import GoliathMetric
 from .goliath_coco_wholebody_metric import GoliathCocoWholeBodyMetric
 from .goliath3d_coco_wholebody_metric import Goliath3dCocoWholeBodyMetric
+from .coco_metric_PCK import CocoMetric_PCK
+from .coco_metric_PCK_heatmap import CocoMetric_PCK_heatmap
 
 __all__ = [
     'CocoMetric', 'PCKAccuracy', 'MpiiPCKAccuracy', 'JhmdbPCKAccuracy', 'AUC',
     'EPE', 'NME', 'PoseTrack18Metric', 'CocoWholeBodyMetric',
     'KeypointPartitionMetric', 'MPJPE', 'GoliathMetric',
-    'GoliathCocoWholeBodyMetric', 'Goliath3dCocoWholeBodyMetric'
+    'GoliathCocoWholeBodyMetric', 'Goliath3dCocoWholeBodyMetric', 'CocoMetric_PCK', 'CocoMetric_PCK_heatmap'
 ]

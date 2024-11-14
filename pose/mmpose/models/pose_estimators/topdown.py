@@ -6,10 +6,11 @@
 
 from itertools import zip_longest
 from collections import OrderedDict
-from typing import Dict, Optional, Union, Tuple
+from typing import Dict, Optional, Union, Tuple, Any
 import torch
 from torch import Tensor
 from mmengine.optim import OptimWrapper
+from mmengine.utils import is_list_of
 
 import torch
 import os
@@ -129,7 +130,7 @@ class TopdownPoseEstimator(BasePoseEstimator):
     ## from mmengine. The loss spike handling is done here.
     ## As this function is called in both single node and slurm mode
     def parse_losses(
-        self, losses: Dict[str, torch.Tensor]
+        self, losses: Union[Dict[str, torch.Tensor], Tuple[Dict[str, torch.Tensor], Any]]
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """Parses the raw outputs (losses) of the network.
 
@@ -143,6 +144,8 @@ class TopdownPoseEstimator(BasePoseEstimator):
             of all losses, and the second is log_vars which will be sent to
             the logger.
         """
+        if isinstance(losses, tuple):
+            losses, pred_fields = losses
         log_vars = []
         for loss_name, loss_value in losses.items():
             if isinstance(loss_value, torch.Tensor):

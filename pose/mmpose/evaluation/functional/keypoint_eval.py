@@ -1,9 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
+# Copyright (c) OpenMMLab. All rights reserved.
 from typing import Optional, Tuple
 
 import numpy as np
@@ -42,12 +37,14 @@ def _calc_distances(preds: np.ndarray, gts: np.ndarray, mask: np.ndarray,
     distances = np.full((N, K), -1, dtype=np.float32)
     # handle invalid values
     norm_factor[np.where(norm_factor <= 0)] = 1e6
+    # distances[_mask] = np.linalg.norm(
+    #     ((preds - gts) / norm_factor[:, None, :])[_mask], axis=-1)
     distances[_mask] = np.linalg.norm(
-        ((preds - gts) / norm_factor[:, None, :])[_mask], axis=-1)
+        (preds - gts)[_mask], axis=-1)
     return distances.T
 
 
-def _distance_acc(distances: np.ndarray, thr: float = 0.5) -> float:
+def _distance_acc(distances: np.ndarray, thr: float = 0.0025) -> float:  # 0.5_________________
     """Return the percentage below the distance threshold, while ignoring
     distances values with -1.
 
@@ -106,6 +103,71 @@ def keypoint_pck_accuracy(pred: np.ndarray, gt: np.ndarray, mask: np.ndarray,
     cnt = len(valid_acc)
     avg_acc = valid_acc.mean() if cnt > 0 else 0.0
     return acc, avg_acc, cnt
+
+
+def keypoint_pck_accuracy_acupoint(pred: np.ndarray, gt: np.ndarray, mask: np.ndarray,
+                                   thr: np.ndarray, factor: np.ndarray) -> tuple:
+    """Calculate the pose accuracy of PCK for each individual keypoint and the
+    averaged accuracy across all keypoints for coordinates.
+
+    Note:
+        PCK metric measures accuracy of the localization of the body joints.
+        The distances between predicted positions and the ground-truth ones
+        are typically normalized by the bounding box size.
+        The threshold (thr) of the normalized distance is commonly set
+        as 0.05, 0.1 or 0.2 etc.
+
+        - instance number: N
+        - keypoint number: K
+
+    Args:
+        pred (np.ndarray[N, K, 2]): Predicted keypoint location.
+        gt (np.ndarray[N, K, 2]): Groundtruth keypoint location.
+        mask (np.ndarray[N, K]): Visibility of the target. False for invisible
+            joints, and True for visible. Invisible joints will be ignored for
+            accuracy calculation.
+        thr (float): Threshold of PCK calculation.
+        norm_factor (np.ndarray[N, 2]): Normalization factor for H&W.
+
+    Returns:
+        tuple: A tuple containing keypoint accuracy.
+
+        - acc (np.ndarray[K]): Accuracy of each keypoint.
+        - avg_acc (float): Averaged accuracy across all keypoints.
+        - cnt (int): Number of valid keypoints.
+    """
+    distances = _calc_distances(pred, gt, mask, factor)
+
+    # 可视化归一化结果
+    # import matplotlib.pyplot as plt
+    # import numpy as np
+
+    # for j, d in enumerate(distances):
+    #     c = []
+    #     for i in d:
+    #         if i != -1:
+    #             c.append(i)
+    #     acupoint_list = ['ST35_L', 'ST35_R', 'ST36_L', 'ST36_R', 'ST41_L', 'ST41_R', 'SP9_L', 'SP9_R', 'EX-LE9_L',
+    #                      'EX-LE9_R', 'EX-LE8_L', 'EX-LE8_R', 'BL40_L', 'BL40_R']
+    #     plt.scatter(range(len(c)), c, color='b', marker='o')
+    #     plt.xlabel('all_image_point')
+    #     plt.ylabel('distance')
+    #     plt.title(f'{acupoint_list[j]}')
+    #     plt.axhline(y=thr, color='r')
+    #     plt.autoscale()
+    #     plt.show()
+
+    acc_5mm = np.array([_distance_acc(d, thr) for d in distances])
+    valid_acc = acc_5mm[acc_5mm >= 0]
+    cnt = len(valid_acc)
+    avg_acc_5mm = valid_acc.mean() if cnt > 0 else 0.0
+
+    acc_10mm = np.array([_distance_acc(d, thr * 2) for d in distances])
+    valid_acc = acc_10mm[acc_10mm >= 0]
+    cnt = len(valid_acc)
+    avg_acc_10mm = valid_acc.mean() if cnt > 0 else 0.0
+
+    return acc_5mm, avg_acc_5mm, acc_10mm, avg_acc_10mm,cnt
 
 
 def keypoint_auc(pred: np.ndarray,
@@ -244,7 +306,7 @@ def simcc_pck_accuracy(output: Tuple[np.ndarray, np.ndarray],
                        target: Tuple[np.ndarray, np.ndarray],
                        simcc_split_ratio: float,
                        mask: np.ndarray,
-                       thr: float = 0.05,
+                       thr: float = 0.0025,  # 0.05
                        normalize: Optional[np.ndarray] = None) -> tuple:
     """Calculate the pose accuracy of PCK for each individual keypoint and the
     averaged accuracy across all keypoints from SimCC.

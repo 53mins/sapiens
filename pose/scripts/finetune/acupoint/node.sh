@@ -1,18 +1,18 @@
-cd ../../../..
+cd ../../..
 
 ###--------------------------------------------------------------
-# DEVICES=0,
-DEVICES=0,1,2,3,4,5,6,7,
+DEVICES=0,
+# DEVICES=0,1,2,3,4,5,6,7,
 
 RUN_FILE='./tools/dist_train.sh'
 PORT=$(( ((RANDOM<<15)|RANDOM) % 63001 + 2000 ))
 
 ##---------copy this to the slurm script-----------------
 ####-----------------MODEL_CARD----------------------------
-DATASET='coco_wholebody'
-MODEL="sapiens_1b-210e_${DATASET}-1024x768"
+DATASET='acupoint'
+MODEL="sapiens_0.3b-${DATASET}-1024x768"
 JOB_NAME="pose_whole_$MODEL"
-TRAIN_BATCH_SIZE_PER_GPU=4
+TRAIN_BATCH_SIZE_PER_GPU=2
 
 RESUME_FROM=''
 LOAD_FROM=''
